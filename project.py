@@ -39,8 +39,9 @@ train_and_test_data = {}
 print(len(data_dict))
 train_size = 200
 test_size = 200
-test_subject_size = test_size / 50
 def get_test_and_train_sample_with_first_data(data_dict,subject,train_size,test_size):
+    first_data_size  = 5
+    test_subject_size = test_size / first_data_size
     train = []
     test = []
     temp = data_dict[subject]
@@ -87,7 +88,35 @@ def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
         test = test + temp
     return test,train
 
-def get_test_and_train_sample_with_mean(data_dict,subject,train_size,test_size):
+def get_test_and_train_sample_with_average(data_dict,subject,train_size,test_size):
+    train = []
+    test = []
+    temp = data_dict[subject]
+    random.shuffle(temp)
+    for i in range(train_size):
+        t = temp[i]
+        train.append(t)
+
+    for i in range(test_size):
+        t = temp[train_size+i]
+        test.append(t)
+    
+    ### for random choose
+    for i in range(int(test_size/test_subject_size)):
+        while True:
+            r = random.randint(0,len(data_dict.keys())-1)
+            key = (list(data_dict.keys()))[r]
+            if key == subject:
+                continue
+            else:
+                break
+        temp = data_dict[key]
+        random.shuffle(temp)
+        temp = temp[:test_subject_size]
+        test = test + temp
+    return test,train
+
+def get_test_and_train_sample_with_k_mean(data_dict,subject,train_size,test_size):
     train = []
     test = []
     temp = data_dict[subject]
