@@ -37,10 +37,10 @@ print(len(data_dict))
 
 train_and_test_data = {}
 print(len(data_dict))
-train_size = 20
+train_size = 200
 test_size = 200
 test_subject_size = test_size / 50
-def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
+def get_test_and_train_sample_with_first_data(data_dict,subject,train_size,test_size):
     train = []
     test = []
     temp = data_dict[subject]
@@ -56,9 +56,24 @@ def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
     for key in data_dict.keys():
         if key == subject:
             continue
-        test = test + data_dict[key][:test_subject_size]
-        
-    """for i in range(int(test_size/test_subject_size)):
+        test = test + data_dict[key][:int(test_subject_size)]
+    return test,train
+
+def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
+    train = []
+    test = []
+    temp = data_dict[subject]
+    random.shuffle(temp)
+    for i in range(train_size):
+        t = temp[i]
+        train.append(t)
+
+    for i in range(test_size):
+        t = temp[train_size+i]
+        test.append(t)
+    
+    ### for random choose
+    for i in range(int(test_size/test_subject_size)):
         while True:
             r = random.randint(0,len(data_dict.keys())-1)
             key = (list(data_dict.keys()))[r]
@@ -69,12 +84,70 @@ def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
         temp = data_dict[key]
         random.shuffle(temp)
         temp = temp[:test_subject_size]
-        test = test + temp"""
+        test = test + temp
     return test,train
 
-test,train = get_random_test_and_train_sample(data_dict,"s002",train_size,test_size)
-print(len(test))
-print(len(train))
+def get_test_and_train_sample_with_mean(data_dict,subject,train_size,test_size):
+    train = []
+    test = []
+    temp = data_dict[subject]
+    random.shuffle(temp)
+    for i in range(train_size):
+        t = temp[i]
+        train.append(t)
+
+    for i in range(test_size):
+        t = temp[train_size+i]
+        test.append(t)
+    
+    ### for random choose
+    for i in range(int(test_size/test_subject_size)):
+        while True:
+            r = random.randint(0,len(data_dict.keys())-1)
+            key = (list(data_dict.keys()))[r]
+            if key == subject:
+                continue
+            else:
+                break
+        temp = data_dict[key]
+        random.shuffle(temp)
+        temp = temp[:test_subject_size]
+        test = test + temp
+    return test,train
+
+
+def get_test_and_train_sample_with_gan(data_dict,subject,train_size,test_size):
+    train = []
+    test = []
+    temp = data_dict[subject]
+    random.shuffle(temp)
+    for i in range(train_size):
+        t = temp[i]
+        train.append(t)
+
+    for i in range(test_size):
+        t = temp[train_size+i]
+        test.append(t)
+    
+    ### for random choose
+    for i in range(int(test_size/test_subject_size)):
+        while True:
+            r = random.randint(0,len(data_dict.keys())-1)
+            key = (list(data_dict.keys()))[r]
+            if key == subject:
+                continue
+            else:
+                break
+        temp = data_dict[key]
+        random.shuffle(temp)
+        temp = temp[:test_subject_size]
+        test = test + temp
+    return test,train
+
+
+
+
+
 
 
 start = time.time()
@@ -98,7 +171,7 @@ params = {'max_features': 0.1, 'max_samples': 5,
 classifier = IsolationForest(contamination=0, max_features=1,
             max_samples=500, n_estimators=3000, n_jobs=-1, random_state=11)
 
-#classifier = IsolationForest(contamination=0)
+
 from sklearn import  metrics
 import matplotlib.pyplot as plt
 
@@ -134,11 +207,13 @@ for key in data_dict.keys():
     y = np.array(([1]*test_size)+([-1]*test_size))
     #print(y)
     fpr, tpr, thresholds = metrics.roc_curve(y, score,drop_intermediate=False)
+    
     tpr_list.append(tpr[:350])
     fpr_list.append(fpr[:350])
 
     print(len(thresholds))
     eer = get_eer(tpr,fpr)
+    print(eer)
     eers.append(eer)
     auc = metrics.roc_auc_score(y,score)
     aucs.append(auc)
