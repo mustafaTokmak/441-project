@@ -56,7 +56,7 @@ def get_random_test_and_train_sample(data_dict,subject,train_size,test_size):
         test = test + temp
     return test,train
 
-def get_test_sample_with_k_means(data_dict,subject,train_size,test_size,k):
+def get_test_sample_with_k_means(data_dict,subject,train_size,test_size,k,data_rate):
     test = []
     all_data = []
     for key in data_dict.keys():
@@ -66,6 +66,7 @@ def get_test_sample_with_k_means(data_dict,subject,train_size,test_size,k):
         
     times = int(test_size / k )
     random.shuffle(all_data)
+    all_data = all_data[:int(len(all_data)*data_rate)]
     fold_size = int(len(all_data) / k)
     for i in range(k):
         fold = all_data[i*fold_size:(i+1)*fold_size]
@@ -142,21 +143,26 @@ for train_size in train_sizes:
         eer,eer_threshold = get_eer(tpr,fpr,thresholds)
 
         #KMEANS
-        for k in k_means:
-            k_means_test = get_test_sample_with_k_means(data_dict,key,train_size,test_size,k)
-            k_means_score = md.scaled_manhattan_distance(train,k_means_test)
-            success = 0
-            fail = 0
-            for s in (k_means_score):
-                if s > eer_threshold:
-                    success += 1
-                else:
-                    fail += 1
-            if not k in md_k_means_result:
-                md_k_means_result[k] = []    
-            md_k_means_result[k].append(success/k)
+        data_rate = [1,1/2,1/4,1/8,1/16]
+            
+        for r in data_rate:
+            if not str(r) in md_k_means_result:
+                md_k_means_result[str(r)] = {}
+            for k in k_means:
+                k_means_test = get_test_sample_with_k_means(data_dict,key,train_size,test_size,k,r)
+                k_means_score = md.scaled_manhattan_distance(train,k_means_test)
+                success = 0
+                fail = 0
+                for s in (k_means_score):
+                    if s > eer_threshold:
+                        success += 1
+                    else:
+                        fail += 1
+                if not str(k) in md_k_means_result[str(r)]:
+                    md_k_means_result[str(r)][str(k)] = []    
+                md_k_means_result[str(r)][str(k)].append(success/k)
                     
-        
+        print(md_k_means_result)
         md_eers.append(eer)
         md_eer_thresholds.append(eer_threshold)
 
@@ -178,20 +184,25 @@ for train_size in train_sizes:
         isof_fpr_list.append(fpr[:int(test_size*1.75)])
 
         eer,eer_threshold = get_eer(tpr,fpr,thresholds)
+        for r in data_rate:
+            if not str(r) in isof_k_means_result:
+                isof_k_means_result[str(r)] = {}
+            for k in k_means:
+                k_means_test = get_test_sample_with_k_means(data_dict,key,train_size,test_size,k,r)
+                k_means_score = classifier.decision_function(k_means_test)
+                success = 0
+                fail = 0
+                for s in (k_means_score):
+                    if s > eer_threshold:
+                        success += 1
+                    else:
+                        fail += 1
+                if not str(k) in isof_k_means_result[str(r)]:
+                    isof_k_means_result[str(r)][str(k)] = []    
+                isof_k_means_result[str(r)][str(k)].append(success/k)
 
-        for k in k_means:
-            k_means_test = get_test_sample_with_k_means(data_dict,key,train_size,test_size,k)
-            k_means_score = classifier.decision_function(k_means_test)
-            success = 0
-            fail = 0
-            for s in (k_means_score):
-                if s > eer_threshold:
-                    success += 1
-                else:
-                    fail += 1
-            if not k in isof_k_means_result:
-                isof_k_means_result[k] = []    
-            isof_k_means_result[k].append(success/k)
+        print(isof_k_means_result)
+
 
 
        
